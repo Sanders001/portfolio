@@ -1,0 +1,9 @@
+# Core (examples need these to run)
+fastapi>=0.104.0
+starlette>=0.27.0
+
+# Testing
+pytest>=7.4.0
+
+# Redis (for middleware examples — optional for running tests)
+# redis>=5.0.0
