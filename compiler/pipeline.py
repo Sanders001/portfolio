@@ -4,7 +4,9 @@ Compiler Pipeline.
 Orquestrador das 4 fases do compilador genérico:
 Tokenize → Parse → Semantic Validate → Execute.
 """
+from dataclasses import dataclass
 import hashlib
+import time
 from typing import Any, Callable, Optional, Tuple
 
 from .ast_nodes import BaseNode
@@ -13,6 +15,23 @@ from .executor import BaseExecutor
 from .parser import BaseParser
 from .semantic import BaseSemanticAnalyzer, SemanticContext
 from .tokens import BaseTokenizer, Token
+
+
+@dataclass
+class CompilerResult:
+    """
+    Encapsula o resultado de uma compilação e execução com ricas métricas de observabilidade.
+    Suporta unpacking legado (result, trace) para compatibilidade reversa.
+    """
+    result: Any
+    trace: dict
+    stats: dict
+    visual_ast: str
+    tokens: list[dict]
+
+    def __iter__(self):
+        yield self.result
+        yield self.trace
 
 
 class CompilerPipeline:
@@ -72,17 +91,44 @@ class CompilerPipeline:
         """
         return self.compile(source, semantic_context)
 
-    def run(self, source: str, context: dict, semantic_context: Optional[SemanticContext] = None) -> Tuple[Any, dict]:
+    def run(self, source: str, context: dict, semantic_context: Optional[SemanticContext] = None) -> CompilerResult:
         """
         Executa todas as fases:
         Tokenize → Parse → Semantic Validate → Execute
 
         Retorna:
-            Tupla contendo o resultado da execução e a árvore de execução (Trace) como dicionário.
+            CompilerResult contendo o resultado final, trace de execução, métricas de performance (stats),
+            árvore visual ASCII e lista de tokens.
         """
-        ast = self.compile(source, semantic_context)
+        t0 = time.perf_counter()
+        
+        tokens = self.tokenizer.tokenize(source)
+        parser = self.parser_factory(tokens)
+        ast = parser.parse()
+
+        if self.semantic_analyzer and semantic_context:
+            self.semantic_analyzer.validate_or_raise(ast, semantic_context)
 
         # BaseExecutor cria um root trace implícito quando invocado
         result, step = self.executor.execute(ast, context)
+        
+        t1 = time.perf_counter()
+        
+        stats = {
+            "execution_time_ms": round((t1 - t0) * 1000, 3),
+            "tokens_count": len(tokens),
+            "ast_nodes_count": ast.count_nodes()
+        }
+        
+        tokens_dump = [
+            {"type": t.type, "value": t.value, "line": t.line, "col": t.col} 
+            for t in tokens
+        ]
 
-        return result, step.to_dict()
+        return CompilerResult(
+            result=result,
+            trace=step.to_dict(),
+            stats=stats,
+            visual_ast=ast.to_ascii_tree().strip(),
+            tokens=tokens_dump
+        )
