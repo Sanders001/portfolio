@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erick | Backend Portfolio & Architecture Patterns</title>
+    <meta name="description" content="Backend Python portfolio showcasing advanced software architecture patterns, domain-driven design, and robust middleware implementations.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons (Lucide) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-effects">
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+    </div>
+
+    <nav class="navbar">
+        <div class="nav-content container">
+            <div class="logo">Erick.<span>dev</span></div>
+            <div class="nav-links">
+                <a href="#showcases">Architecture Showcases</a>
+                <a href="https://github.com/erick" target="_blank" class="btn btn-outline">
+                    <i data-lucide="github"></i> GitHub
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero container">
+            <div class="hero-content">
+                <div class="badge fade-in-up">Python Backend Developer</div>
+                <h1 class="fade-in-up delay-1">Engineering <br><span class="gradient-text">Robust Architecture</span></h1>
+                <p class="fade-in-up delay-2">
+                    Showcasing production-grade backend patterns extracted from real-world applications. 
+                    Specializing in Domain-Driven Design, complex DSL compilers, and highly scalable integrations.
+                </p>
+                <div class="hero-actions fade-in-up delay-3">
+                    <a href="#showcases" class="btn btn-primary">Explore Patterns</a>
+                    <a href="https://github.com/erick/portfolio-backend-python" target="_blank" class="btn btn-secondary">
+                        <i data-lucide="code-2"></i> View Source
+                    </a>
+                </div>
+            </div>
+            <div class="hero-code fade-in-up delay-4">
+                <div class="code-window">
+                    <div class="window-header">
+                        <span class="dot red"></span>
+                        <span class="dot yellow"></span>
+                        <span class="dot green"></span>
+                        <span class="window-title">compiler_demo.py</span>
+                    </div>
+                    <pre><code class="language-python">
+<span class="keyword">from</span> compiler <span class="keyword">import</span> CompilerPipeline
+
+<span class="comment"># Generic DSL Engine with Pratt Parser & Trace Tree</span>
+pipeline = CompilerPipeline(
+    tokenizer=RuleTokenizer(),
+    parser_factory=<span class="keyword">lambda</span> t: RuleParser(t),
+    executor=RuleExecutor()
+)
+
+result, trace = pipeline.run(
+    source=<span class="string">'IF age > 18 AND status == "active" THEN approved'</span>,
+    context={<span class="string">"age"</span>: <span class="number">25</span>, <span class="string">"status"</span>: <span class="string">"active"</span>, <span class="string">"approved"</span>: <span class="keyword">True</span>}
+)
+<span class="comment"># >> result: True</span>
+                    </code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="showcases" class="showcases container">
+            <div class="section-header fade-in-up">
+                <h2>Architecture Showcases</h2>
+                <p>Modular, isolated, and generic patterns ready for production.</p>
+            </div>
+
+            <div class="grid">
+                <!-- Showcase 1 -->
+                <div class="card fade-in-up">
+                    <div class="card-icon"><i data-lucide="cpu"></i></div>
+                    <h3>Compiler Framework</h3>
+                    <p>A full 4-phase Domain-Specific Language (DSL) compiler featuring a Pratt Parser (precedence climbing), immutable AST, and execution trace observability.</p>
+                    <div class="tags">
+                        <span>Pratt Parser</span>
+                        <span>AST</span>
+                        <span>Visitor Pattern</span>
+                    </div>
+                </div>
+
+                <!-- Showcase 2 -->
+                <div class="card fade-in-up delay-1">
+                    <div class="card-icon"><i data-lucide="shield-check"></i></div>
+                    <h3>Middleware Stack</h3>
+                    <p>Production-ready Starlette middlewares including Customs (payload sanitization), distributed Redis Idempotency locks, and Sliding Window Rate Limiting.</p>
+                    <div class="tags">
+                        <span>Redis NX</span>
+                        <span>Rate Limiting</span>
+                        <span>Security</span>
+                    </div>
+                </div>
+
+                <!-- Showcase 3 -->
+                <div class="card fade-in-up delay-2">
+                    <div class="card-icon"><i data-lucide="network"></i></div>
+                    <h3>Integration Layer</h3>
+                    <p>Hexagonal Architecture implementation for external providers with dynamic auto-discovery, registry decorator, and multi-tenant credential resolution.</p>
+                    <div class="tags">
+                        <span>Hexagonal Arch</span>
+                        <span>Plugin System</span>
+                        <span>DI</span>
+                    </div>
+                </div>
+
+                <!-- Showcase 4 -->
+                <div class="card fade-in-up">
+                    <div class="card-icon"><i data-lucide="gavel"></i></div>
+                    <h3>Governance & DDD</h3>
+                    <p>Invariant enforcement (Constitution pattern) and cross-domain conflict Mediator ensuring strict boundary control in complex multi-domain systems.</p>
+                    <div class="tags">
+                        <span>DDD</span>
+                        <span>Mediator</span>
+                        <span>Policy Pattern</span>
+                    </div>
+                </div>
+
+                <!-- Showcase 5 -->
+                <div class="card fade-in-up delay-1">
+                    <div class="card-icon"><i data-lucide="brain-circuit"></i></div>
+                    <h3>Cognitive Pipeline</h3>
+                    <p>Abstract contracts for a multi-stage NLP architecture featuring semantic caches, LLM fallbacks, domain strategies, and interceptors.</p>
+                    <div class="tags">
+                        <span>AI/NLP Pipeline</span>
+                        <span>Strategy</span>
+                        <span>Interceptor</span>
+                    </div>
+                </div>
+
+                <!-- Showcase 6 -->
+                <div class="card fade-in-up delay-2">
+                    <div class="card-icon"><i data-lucide="test-tubes"></i></div>
+                    <h3>Testing & Quality</h3>
+                    <p>Comprehensive test suite covering all modules. Demonstrates TDD principles with 100% passing unit tests via Pytest, alongside runnable demo scripts.</p>
+                    <div class="tags">
+                        <span>Pytest</span>
+                        <span>TDD</span>
+                        <span>Clean Code</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container footer-content">
+            <p>&copy; 2026 Erick. Built with Python & Architecture Best Practices.</p>
+            <div class="footer-links">
+                <a href="https://github.com/erick/portfolio-backend-python" target="_blank"><i data-lucide="github"></i> Repository</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
