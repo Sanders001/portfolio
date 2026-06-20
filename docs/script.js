@@ -66,8 +66,19 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- JS Compiler Implementation (Rules DSL) ---
-class LexError extends Error {}
-class ParseError extends Error {}
+class LexError extends Error {
+    constructor(message, line, col) {
+        super(message);
+        this.line = line;
+        this.col = col;
+    }
+}
+class ParseError extends Error {
+    constructor(message, token) {
+        super(message);
+        this.token = token;
+    }
+}
 
 function tokenize(source) {
     const spec = [
@@ -110,7 +121,7 @@ function tokenize(source) {
         }
         
         if (!match) {
-            throw new LexError(`Unexpected character at ${pos}: ${source[pos]}`);
+            throw new LexError(`Unexpected character: '${source[pos]}'`, 1, pos + 1);
         }
         
         if (matchedType !== 'WS') {
@@ -147,7 +158,7 @@ class PrattParser {
     
     expect(type) {
         if (this.current.type === type) return this.advance();
-        throw new ParseError(`Expected ${type}, found ${this.current.type}`);
+        throw new ParseError(`Expected ${type}, found ${this.current.type}`, this.current);
     }
     
     getPrecedence(token) {
@@ -155,9 +166,12 @@ class PrattParser {
     }
     
     parse() {
+        if (this.current.type === 'EOF') {
+            throw new ParseError('Unexpected EOF', this.current);
+        }
         const node = this.expression(0);
         if (this.current.type !== 'EOF') {
-            throw new ParseError(`Unconsumed token: ${this.current.type}`);
+            throw new ParseError(`Unconsumed token: ${this.current.type}`, this.current);
         }
         return node;
     }
@@ -191,7 +205,7 @@ class PrattParser {
             const action = this.expression(0);
             return { type: 'binary_op', operator: 'if_then', left: condition, right: action };
         }
-        throw new ParseError(`Unexpected token: ${token.type} (${token.value})`);
+        throw new ParseError(`Unexpected token: ${token.type} (${token.value})`, token);
     }
     
     led(token, left) {
@@ -204,7 +218,7 @@ class PrattParser {
             const right = this.expression(this.getPrecedence(token));
             return { type: 'binary_op', operator: op, left, right };
         }
-        throw new ParseError(`Unexpected infix token: ${token.type}`);
+        throw new ParseError(`Unexpected infix token: ${token.type}`, token);
     }
 }
 
@@ -263,15 +277,56 @@ const backBtn = document.getElementById('demo-back-btn');
 const runBtn = document.getElementById('demo-run-btn');
 const inputEl = document.getElementById('demo-input');
 const contextEl = document.getElementById('demo-context');
+
+const outTokens = document.getElementById('demo-output-tokens');
 const outAst = document.getElementById('demo-output-ast');
+const outTree = document.getElementById('demo-output-tree');
 const outTrace = document.getElementById('demo-output-trace');
+const errorPanel = document.getElementById('demo-error-panel');
+const resultBadge = document.getElementById('demo-result-badge');
+const statsBar = document.getElementById('demo-stats');
+
 const tabBtns = document.querySelectorAll('.tab-btn');
+const presetBtns = document.querySelectorAll('.preset-btn');
+
+// AST Visual Tree Renderer
+function renderASTVisual(node, prefix = "", isLeft = true) {
+    if (!node) return "";
+    let result = "";
+    
+    // Node Representation
+    let nodeStr = "";
+    if (node.type === "literal") nodeStr = node.value;
+    else if (node.type === "identifier") nodeStr = node.name;
+    else if (node.type === "unary_op") nodeStr = node.operator;
+    else if (node.type === "binary_op") nodeStr = node.operator === "if_then" ? "IF...THEN" : node.operator;
+    
+    result += prefix + (isLeft ? "├── " : "└── ") + nodeStr + "\n";
+    
+    // Children
+    if (node.type === "unary_op") {
+        result += renderASTVisual(node.operand, prefix + (isLeft ? "│   " : "    "), false);
+    } else if (node.type === "binary_op") {
+        result += renderASTVisual(node.left, prefix + (isLeft ? "│   " : "    "), true);
+        result += renderASTVisual(node.right, prefix + (isLeft ? "│   " : "    "), false);
+    }
+    
+    return result;
+}
+
+// Node counter
+function countNodes(node) {
+    if (!node) return 0;
+    if (node.type === "literal" || node.type === "identifier") return 1;
+    if (node.type === "unary_op") return 1 + countNodes(node.operand);
+    if (node.type === "binary_op") return 1 + countNodes(node.left) + countNodes(node.right);
+    return 1;
+}
 
 if (compilerCard && demoView) {
     compilerCard.addEventListener('click', () => {
         grid.classList.add('hidden');
         demoView.classList.remove('hidden');
-        // Small delay to allow display:block to apply before scrolling
         setTimeout(() => {
             demoView.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 50);
@@ -290,16 +345,40 @@ if (compilerCard && demoView) {
             btn.classList.add('active');
             const target = btn.dataset.tab;
             
-            if (target === 'ast') {
-                outAst.parentElement.classList.remove('hidden');
-                outTrace.parentElement.classList.add('hidden');
-                outAst.style.display = 'block';
-                outTrace.style.display = 'none';
-            } else {
-                outTrace.parentElement.classList.remove('hidden');
-                outAst.parentElement.classList.add('hidden');
-                outTrace.style.display = 'block';
-                outAst.style.display = 'none';
+            [outTokens, outAst, outTree, outTrace].forEach(el => {
+                if (el) el.parentElement.classList.add('hidden');
+            });
+            
+            if (target === 'tokens') outTokens.parentElement.classList.remove('hidden');
+            if (target === 'ast') outAst.parentElement.classList.remove('hidden');
+            if (target === 'tree') outTree.parentElement.classList.remove('hidden');
+            if (target === 'trace') outTrace.parentElement.classList.remove('hidden');
+        });
+    });
+
+    // Presets
+    const presets = {
+        'adult': {
+            dsl: 'IF age > 18 AND status == "active" THEN approved',
+            ctx: '{\n  "age": 25,\n  "status": "active",\n  "approved": true\n}'
+        },
+        'premium': {
+            dsl: 'IF customer_type == "premium" OR points >= 1000 THEN discount_applied',
+            ctx: '{\n  "customer_type": "standard",\n  "points": 1200,\n  "discount_applied": true\n}'
+        },
+        'error': {
+            dsl: 'IF age > 18 AND THEN',
+            ctx: '{\n  "age": 20\n}'
+        }
+    };
+
+    presetBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const preset = presets[btn.dataset.preset];
+            if (preset) {
+                inputEl.value = preset.dsl;
+                contextEl.value = preset.ctx;
+                runCompiler();
             }
         });
     });
@@ -308,6 +387,14 @@ if (compilerCard && demoView) {
 }
 
 function runCompiler() {
+    errorPanel.classList.add('hidden');
+    resultBadge.className = 'result-badge null';
+    resultBadge.textContent = 'Result: Computing...';
+    
+    let t0, t1;
+    let tokens = [];
+    let astNodesCount = 0;
+    
     try {
         const source = inputEl.value;
         const contextStr = contextEl.value;
@@ -316,18 +403,30 @@ function runCompiler() {
         try {
             context = JSON.parse(contextStr);
         } catch (e) {
-            outAst.textContent = `Context JSON Parse Error: ${e.message}`;
-            outTrace.textContent = `Context JSON Parse Error: ${e.message}`;
-            return;
+            throw new Error(`Context JSON Parse Error: ${e.message}`);
         }
         
-        const tokens = tokenize(source);
+        t0 = performance.now();
+        
+        // 1. Tokenize
+        tokens = tokenize(source);
+        outTokens.textContent = JSON.stringify(tokens, null, 2);
+        
+        // 2. Parse
         const parser = new PrattParser(tokens);
         const ast = parser.parse();
-        
-        const { result, trace } = executeAst(ast, context);
-        
+        astNodesCount = countNodes(ast);
         outAst.textContent = JSON.stringify(ast, null, 2);
+        
+        const visualTree = ast.type === "binary_op" && ast.operator === "if_then" 
+            ? "IF...THEN\n" + renderASTVisual(ast.left, "", true) + renderASTVisual(ast.right, "", false)
+            : renderASTVisual(ast, "", false);
+            
+        outTree.textContent = visualTree.trim() || "Empty AST";
+        
+        // 3. Execute
+        const { result, trace } = executeAst(ast, context);
+        t1 = performance.now();
         
         const traceOutput = {
             final_result: result,
@@ -335,9 +434,48 @@ function runCompiler() {
         };
         outTrace.textContent = JSON.stringify(traceOutput, null, 2);
         
+        // Update Results UI
+        if (result === true) {
+            resultBadge.className = 'result-badge true';
+            resultBadge.innerHTML = '<i data-lucide="check-circle" style="width: 16px; height: 16px;"></i> Result: TRUE';
+        } else if (result === false) {
+            resultBadge.className = 'result-badge false';
+            resultBadge.innerHTML = '<i data-lucide="x-circle" style="width: 16px; height: 16px;"></i> Result: FALSE';
+        } else {
+            resultBadge.className = 'result-badge null';
+            resultBadge.textContent = `Result: ${result}`;
+        }
+        lucide.createIcons();
+        
+        statsBar.textContent = `Tokens: ${tokens.length} | AST Nodes: ${astNodesCount} | Time: ${(t1 - t0).toFixed(2)} ms`;
+        
     } catch (e) {
-        outAst.textContent = `Error: ${e.message}`;
-        outTrace.textContent = `Error: ${e.message}`;
+        let errorMsg = e.message;
+        
+        if (e instanceof LexError) {
+            errorMsg = `Syntax Error (Lexical)\n\n${e.message}\nLine ${e.line}, Column ${e.col}`;
+        } else if (e instanceof ParseError) {
+            errorMsg = `Syntax Error (Parsing)\n\n${e.message}`;
+            if (e.token) {
+                errorMsg += `\nLine ${e.token.line}, Column ${e.token.col}`;
+                const lines = inputEl.value.split('\n');
+                if (lines.length > 0) {
+                    errorMsg += `\n\n${lines[0]}\n${' '.repeat(Math.max(0, e.token.col))}^`;
+                }
+            }
+        }
+        
+        errorPanel.textContent = errorMsg;
+        errorPanel.classList.remove('hidden');
+        
+        resultBadge.className = 'result-badge false';
+        resultBadge.innerHTML = '<i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i> Compilation Error';
+        lucide.createIcons();
+        
+        outAst.textContent = "";
+        outTree.textContent = "";
+        outTrace.textContent = "";
+        statsBar.textContent = `Tokens: ${tokens.length > 0 ? tokens.length : '?'} | AST Nodes: 0 | Time: N/A`;
     }
 }
 

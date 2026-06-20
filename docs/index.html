@@ -18,7 +18,7 @@
     <!-- Icons (Lucide) -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <link rel="stylesheet" href="style.css?v=1.1">
+    <link rel="stylesheet" href="style.css?v=1.2">
 </head>
 
 <body>
@@ -183,6 +183,12 @@ result, trace = pipeline.run(
                 
                 <div class="demo-layout">
                     <div class="demo-input-panel">
+                        <div class="presets-bar">
+                            <button class="preset-btn" data-preset="adult">Adult Approval</button>
+                            <button class="preset-btn" data-preset="premium">Premium Customer</button>
+                            <button class="preset-btn" data-preset="error">Syntax Error</button>
+                        </div>
+                        
                         <label>Rules DSL Input</label>
                         <textarea id="demo-input" rows="4">IF age > 18 AND status == "active" THEN approved</textarea>
                         
@@ -199,12 +205,23 @@ result, trace = pipeline.run(
                     </div>
                     
                     <div class="demo-output-panel">
+                        <div class="output-header">
+                            <div id="demo-result-badge" class="result-badge null">Result: Waiting...</div>
+                            <div class="stats-bar" id="demo-stats">
+                                Tokens: 0 | AST Nodes: 0 | Time: 0.00ms
+                            </div>
+                        </div>
                         <div class="output-tabs">
-                            <button class="tab-btn active" data-tab="ast">Abstract Syntax Tree</button>
+                            <button class="tab-btn" data-tab="tokens">Tokens</button>
+                            <button class="tab-btn" data-tab="ast">AST JSON</button>
+                            <button class="tab-btn active" data-tab="tree">Visual AST</button>
                             <button class="tab-btn" data-tab="trace">Execution Trace</button>
                         </div>
                         <div class="output-content">
-                            <pre><code id="demo-output-ast" class="language-json"></code></pre>
+                            <div id="demo-error-panel" class="error-panel hidden"></div>
+                            <pre class="hidden"><code id="demo-output-tokens" class="language-json"></code></pre>
+                            <pre class="hidden"><code id="demo-output-ast" class="language-json"></code></pre>
+                            <pre><code id="demo-output-tree" class="language-tree"></code></pre>
                             <pre class="hidden"><code id="demo-output-trace" class="language-json"></code></pre>
                         </div>
                     </div>
@@ -223,7 +240,7 @@ result, trace = pipeline.run(
         </div>
     </footer>
 
-    <script src="script.js?v=1.1"></script>
+    <script src="script.js?v=1.2"></script>
 </body>
 
 </html>
