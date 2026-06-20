@@ -40,6 +40,12 @@ Source Code → [Tokenizer] → Tokens → [Parser] → AST → [Semantic] → V
 - **Cache** com abstração Redis/InMemory
 - **Serialização JSON-safe** (evitando pickle inseguro por design)
 
+**🚀 Atualizações de Observabilidade (V1 & V2):**
+- **V1 (Métricas e Tokens):** Extração de tokens detalhada, rastreio visual do resultado da execução e **Compilation Stats** (com cálculo de tempo de execução via `perf_counter` no Python / `performance.now` no JS e contagem de nós da AST).
+- **V2 (Developer Experience):** Renderização visual de **Árvore ASCII** da AST diretamente em console (Python) e na UI (Javascript), presets interativos e painéis ricos para tratamento de erros sintáticos apontando Linha/Coluna.
+- **Paridade JS ↔ Python:** A demonstração live no GitHub Pages conta com uma porta direta do motor Python em Javascript puro executando no navegador do usuário.
+
+
 ```python
 # Exemplo: Pipeline de compilação
 pipeline = CompilerPipeline(
