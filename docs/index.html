@@ -90,10 +90,11 @@ result, trace = pipeline.run(
                 <p>Modular, isolated, and generic patterns ready for production.</p>
             </div>
 
-            <div class="grid">
+            <div class="grid" id="showcases-grid">
                 <!-- Showcase 1 -->
-                <div class="card fade-in-up">
+                <div class="card fade-in-up" id="compiler-card">
                     <div class="card-icon"><i data-lucide="cpu"></i></div>
+                    <div class="demo-badge">Live Demo <i data-lucide="play" style="width: 12px; height: 12px;"></i></div>
                     <h3>Compiler Framework</h3>
                     <p>A full 4-phase Domain-Specific Language (DSL) compiler featuring a Pratt Parser (precedence
                         climbing), immutable AST, and execution trace observability.</p>
@@ -166,6 +167,46 @@ result, trace = pipeline.run(
                         <span>Pytest</span>
                         <span>TDD</span>
                         <span>Clean Code</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Compiler Demo View -->
+            <div id="compiler-demo" class="demo-view hidden">
+                <button class="btn btn-outline back-btn" id="demo-back-btn">
+                    <i data-lucide="arrow-left"></i> Back to Patterns
+                </button>
+                <div class="demo-header">
+                    <h3>Compiler Live Demo</h3>
+                    <p>Try the Rules DSL! The tokenization, parsing, and execution run entirely in your browser using a JavaScript implementation of the Python Pratt Parser pattern.</p>
+                </div>
+                
+                <div class="demo-layout">
+                    <div class="demo-input-panel">
+                        <label>Rules DSL Input</label>
+                        <textarea id="demo-input" rows="4">IF age > 18 AND status == "active" THEN approved</textarea>
+                        
+                        <label>Context (JSON)</label>
+                        <textarea id="demo-context" rows="4">{
+  "age": 25,
+  "status": "active",
+  "approved": true
+}</textarea>
+                        
+                        <button class="btn btn-primary" id="demo-run-btn">
+                            <i data-lucide="play"></i> Compile & Run
+                        </button>
+                    </div>
+                    
+                    <div class="demo-output-panel">
+                        <div class="output-tabs">
+                            <button class="tab-btn active" data-tab="ast">Abstract Syntax Tree</button>
+                            <button class="tab-btn" data-tab="trace">Execution Trace</button>
+                        </div>
+                        <div class="output-content">
+                            <pre><code id="demo-output-ast" class="language-json"></code></pre>
+                            <pre><code id="demo-output-trace" class="language-json hidden"></code></pre>
+                        </div>
                     </div>
                 </div>
             </div>
